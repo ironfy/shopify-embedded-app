@@ -9,6 +9,7 @@ const session = require('koa-session'); // Session middleware for koa
 dotenv.config(); //get config from .env file and updates the process.env
 const { default: graphQLProxy } = require('@shopify/koa-shopify-graphql-proxy'); // Koa shopify graphql proxy package 
 const { ApiVersion } = require('@shopify/koa-shopify-graphql-proxy'); // The supported api versions for our proxy
+const getSubscriptionUrl = require('./server/getSubscriptionUrl'); // Server script
 
 const port = parseInt(process.env.PORT, 10) || 3000; // Port
 const dev = process.env.NODE_ENV !== 'production'; // Dev mode
@@ -28,10 +29,10 @@ app.prepare().then(() => {
             apiKey: SHOPIFY_API_KEY, // App token
             secret: SHOPIFY_API_SECRET_KEY, // App secret
             scopes: ['read_products', 'write_products'], // App scopes
-            afterAuth(ctx) {
+            async afterAuth(ctx) {
                 const { shop, accessToken } = ctx.session;
                 ctx.cookies.set('shopOrigin', shop, { httpOnly: false });
-                ctx.redirect('/');
+                await getSubscriptionUrl(ctx, accessToken, shop);
             },
         }),
     );
